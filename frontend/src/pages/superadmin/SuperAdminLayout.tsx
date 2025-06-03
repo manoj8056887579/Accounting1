@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranding } from "@/contexts/BrandingContext";
 
-const SuperAdminLayout = () => {
+const SuperAdminLayout: React.FC = () => {
   const { logout } = useAuth();
   const { logoUrl, faviconUrl } = useBranding();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -153,14 +153,11 @@ const SuperAdminLayout = () => {
         <div className="p-2 mt-auto">
           <Button
             variant="ghost"
-            className={cn(
-              "flex items-center px-3 py-2 text-sm text-destructive hover:bg-destructive/10 hover:text-destructive ",
-              isSidebarCollapsed ? "justify-center w-10 px-2 mx-auto" : "w-full"
-            )}
+            className="flex items-center px-3 py-2 text-sm text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={logout}
             title={isSidebarCollapsed ? "Logout" : undefined}
           >
-            <LogOut className={cn("h-4 w-4", !isSidebarCollapsed && "mr-2")} />
+            <LogOut className="h-4 w-4 mr-2" />
             {!isSidebarCollapsed && "Logout"}
           </Button>
         </div>

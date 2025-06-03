@@ -1,15 +1,16 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const { pool } = require('./utils/config/connectDB');
+const pool = require('./utils/config/connectDB');
 const routes = require('./routes/index');
 const initializeDatabase = require('./utils/config/initDB');
 const path = require('path');
+const OrganizationDashboardRoutes = require('./routes/dashboard/index');
 
 // Load environment variables
 dotenv.config();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000; 
 
 const app = express();
 
@@ -29,15 +30,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware
+// Middleware 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory using absolute path
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
 app.use("/api", routes);
+app.use('/api/dashboard', OrganizationDashboardRoutes);
 
 // Test database connection
 app.get("/", async (req, res) => {
@@ -49,7 +51,7 @@ app.get("/", async (req, res) => {
     });
   } catch (error) {
     console.error('Database connection error:', error);
-    res.status(500).json({
+    res.status(500).json({ 
       message: "API is running but database connection failed",
       error: error.message
     });
@@ -74,3 +76,14 @@ const startServer = async () => {
 };
 
 startServer();
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something broke!',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+ 

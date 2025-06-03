@@ -1,10 +1,15 @@
 const pool = require('./connectDB');
+const initSuperAdmins = require('./initSuperAdmin');
 const paymentGatewaySchema = require('../models/superadmin/paymentgateway/PaymentGatewaySchema');
-const subscriptionSchema = require('../models/superadmin/subscriptionplan/SubscriptionSchema')
+const subscriptionSchema = require('../models/superadmin/subscriptionplan/SubscriptionSchema');
 const SmtpSettingsSchema = require('../models/superadmin/smtp/smtpSchema'); 
 const brandSettingsSchema = require('../models/superadmin/brand/BrandSchema');
 const freetrialSchema = require('../models/superadmin/freetrial/FreeTrialSchema');
-
+const financeSettingsSchema = require('../models/superadmin/finance/financeSchema');
+const organizationSchema = require('../models/superadmin/organization/organizationSchema');
+const superadminSchema = require('../models/superadmin/superadminSchema');
+const organizationAdminSchema = require('../models/superadmin/organization/organizationAdminSchema');
+const OTPSchema = require('../models/auth/OTPSchema');
 async function initializeDatabase(retryCount = 0) {
   const MAX_RETRIES = 3;
   const client = await pool.connect();
@@ -15,16 +20,24 @@ async function initializeDatabase(retryCount = 0) {
     
     // Add advisory lock to prevent concurrent schema modifications
     await client.query('SELECT pg_advisory_xact_lock(1)');
-    
-    // Create payment_gateways table
+     
+    // Create all required tables
+    await client.query(superadminSchema);
     await client.query(paymentGatewaySchema); 
     await client.query(subscriptionSchema);
     await client.query(SmtpSettingsSchema);
     await client.query(brandSettingsSchema);
     await client.query(freetrialSchema);
-    
+    await client.query(financeSettingsSchema);
+    await client.query(organizationSchema);
+    await client.query(organizationAdminSchema);
+    await client.query(OTPSchema);
     await client.query('COMMIT');
     console.log('✅ Database tables initialized successfully');
+
+    // Initialize superadmins after tables are created
+    await initSuperAdmins();
+    
   } catch (error) {
     await client.query('ROLLBACK');
     
@@ -41,6 +54,6 @@ async function initializeDatabase(retryCount = 0) {
     client.release();
   }
 }
- 
+
 module.exports = initializeDatabase;
  

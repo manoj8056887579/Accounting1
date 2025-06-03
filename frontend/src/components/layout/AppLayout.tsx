@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
-import { 
-  LayoutDashboard, 
-  ShoppingCart, 
+import React, { useState } from "react";
+import {
+  Link,
+  Outlet,
+  useLocation,
+  useParams,
+  useNavigate,
+} from "react-router-dom";
+import {
+  LayoutDashboard,
+  ShoppingCart,
   BookOpen,
   Package,
   Truck,
@@ -20,147 +25,62 @@ import {
   ChevronRight,
   MessageSquare,
   FileText,
-  File
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { 
+  File,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 
-// Define navigation items with role access control
+// Define navigation items
 const navigationItems = [
-  { 
-    name: 'Dashboard', 
-    path: '/dashboard', 
-    icon: LayoutDashboard, 
-    roles: ['admin', 'cashier', 'accountant', 'inventory_manager', 'purchase_manager'] as UserRole[] 
-  },
-  { 
-    name: 'Point of Sale', 
-    path: '/pos', 
-    icon: ShoppingCart, 
-    roles: ['admin', 'cashier'] as UserRole[] 
-  },
-  { 
-    name: 'Inventory', 
-    path: '/inventory', 
-    icon: Package, 
-    roles: ['admin', 'inventory_manager'] as UserRole[] 
-  },
-  { 
-    name: 'Sales', 
-    path: '/sales', 
-    icon: Receipt, 
-    roles: ['admin'] as UserRole[] 
-  },
-  { 
-    name: 'Purchases', 
-    path: '/purchases', 
-    icon: Truck, 
-    roles: ['admin', 'purchase_manager'] as UserRole[] 
-  },
-  { 
-    name: 'Accounting', 
-    path: '/accounting', 
-    icon: BookOpen, 
-    roles: ['admin', 'accountant'] as UserRole[] 
-  },
-  { 
-    name: 'CRM', 
-    path: '/crm', 
-    icon: Users, 
-    roles: ['admin', 'accountant', 'purchase_manager'] as UserRole[] 
-  },
-  { 
-    name: 'WhatsApp', 
-    path: '/whatsapp', 
-    icon: MessageSquare, 
-    roles: ['admin', 'accountant', 'purchase_manager'] as UserRole[] 
-  },
-  { 
-    name: 'E-Waybill', 
-    path: '/e-waybill', 
-    icon: FileText, 
-    roles: ['admin', 'accountant', 'inventory_manager'] as UserRole[] 
-  },
-  { 
-    name: 'GST E-Filing', 
-    path: '/gst-efiling', 
-    icon: File, 
-    roles: ['admin', 'accountant'] as UserRole[] 
-  },
-  { 
-    name: 'Tax', 
-    path: '/tax', 
-    icon: Percent, 
-    roles: ['admin', 'accountant'] as UserRole[] 
-  },
-  { 
-    name: 'Reports', 
-    path: '/reports', 
-    icon: ChartBar, 
-    roles: ['admin', 'accountant'] as UserRole[] 
-  },
-  { 
-    name: 'User Management', 
-    path: '/users', 
-    icon: User, 
-    roles: ['admin'] as UserRole[] 
-  },
-  { 
-    name: 'Settings', 
-    path: '/settings', 
-    icon: Settings, 
-    roles: ['admin'] as UserRole[] 
-  },
+  { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Point of Sale", path: "/pos", icon: ShoppingCart },
+  { name: "Inventory", path: "/inventory", icon: Package },
+  { name: "Sales", path: "/sales", icon: Receipt },
+  { name: "Purchases", path: "/purchases", icon: Truck },
+  { name: "Accounting", path: "/accounting", icon: BookOpen },
+  { name: "CRM", path: "/crm", icon: Users },
+  { name: "WhatsApp", path: "/whatsapp", icon: MessageSquare },
+  { name: "E-Waybill", path: "/e-waybill", icon: FileText },
+  { name: "GST E-Filing", path: "/gst-efiling", icon: File },
+  { name: "Tax", path: "/tax", icon: Percent },
+  { name: "Reports", path: "/reports", icon: ChartBar },
+  { name: "User Management", path: "/users", icon: User },
+  { name: "Settings", path: "/settings", icon: Settings },
 ];
 
-const AppLayout: React.FC = () => {
-  const { user, logout } = useAuth();
+const AppLayout: React.FC<{ organization?: { name?: string } }> = ({ organization }) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
-
-  if (!user) {
-    return <Outlet />;
-  }
-
-  // Filter navigation items based on user role
-  const filteredNavItems = navigationItems.filter(item => 
-    item.roles.includes(user.role)
-  );
+  const { organizationId } = useParams();
+  const basePath = organizationId ? `/${organizationId}` : "";
+  const navigate = useNavigate();
 
   // Toggle sidebar (especially for mobile)
   const toggleSidebar = () => {
-    setSidebarOpen(prev => !prev);
+    setSidebarOpen((prev) => !prev);
   };
-  
+
   // Toggle sidebar minimized state (desktop only)
   const toggleSidebarMinimized = () => {
-    setSidebarMinimized(prev => !prev);
+    setSidebarMinimized((prev) => !prev);
   };
-  
-  // Get user initials for avatar
-  const userInitials = user.name
-    .split(' ')
-    .map(name => name[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex bg-gray-50">
       {/* Sidebar */}
-      <aside 
+      <aside
         className={cn(
           "fixed inset-y-0 left-0 z-20 flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
@@ -169,18 +89,16 @@ const AppLayout: React.FC = () => {
         )}
       >
         {/* Sidebar Header */}
-        <div className={cn(
-          "flex h-16 items-center justify-between border-b border-sidebar-border",
-          sidebarMinimized ? "px-2" : "px-4"
-        )}>
+        <div
+          className={cn(
+            "flex h-16 items-center justify-between border-b border-sidebar-border",
+            sidebarMinimized ? "px-2" : "px-4"
+          )}
+        >
           {!sidebarMinimized ? (
-            <Link to="/dashboard" className="flex items-center space-x-2">
-              <span className="text-xl font-bold">BizSuite</span>
-            </Link>
+            <span className="text-xl font-bold truncate">{organization?.name || 'Organization'}</span>
           ) : (
-            <Link to="/dashboard" className="flex w-full items-center justify-center">
-              <span className="text-xl font-bold">B</span>
-            </Link>
+            <span className="text-xl font-bold">{organization?.name ? organization.name.charAt(0).toUpperCase() : 'O'}</span>
           )}
           {isMobile && (
             <Button
@@ -192,7 +110,7 @@ const AppLayout: React.FC = () => {
               <X className="h-5 w-5" />
             </Button>
           )}
-          {!isMobile && (
+          {/* {!isMobile && (
             <Button
               variant="ghost"
               size="icon"
@@ -206,129 +124,154 @@ const AppLayout: React.FC = () => {
                 <ChevronLeft className="h-5 w-5" />
               )}
             </Button>
-          )}
+          )} */}
         </div>
-        
+
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
-          <ul className="space-y-1">
-            {filteredNavItems.map((item) => (
+          <ul className="space-y-1"> 
+            {navigationItems.map((item) => (
               <li key={item.path}>
                 <Link
-                  to={item.path}
+                  to={`${basePath}${item.path}`}
                   className={cn(
                     "flex items-center rounded-md px-3 py-2 text-sm font-medium",
-                    location.pathname === item.path || location.pathname.startsWith(`${item.path}/`) 
+                    location.pathname === `${basePath}${item.path}` ||
+                      location.pathname.startsWith(`${basePath}${item.path}/`)
                       ? "bg-sidebar-primary text-sidebar-primary-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                     sidebarMinimized && "justify-center"
                   )}
                   title={sidebarMinimized ? item.name : undefined}
                 >
-                  <item.icon className={cn("h-5 w-5", !sidebarMinimized && "mr-3")} />
+                  <item.icon
+                    className={cn("h-5 w-5", !sidebarMinimized && "mr-3")}
+                  />
                   {!sidebarMinimized && <span>{item.name}</span>}
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
-        
-        {/* User Profile */}
-        <div className="border-t border-sidebar-border p-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className={cn(
-                  "flex w-full items-center text-sidebar-foreground hover:bg-sidebar-accent px-3 py-2",
-                  sidebarMinimized && "justify-center px-1"
-                )}
-              >
-                <Avatar className="h-8 w-8 mr-2">
-                  <AvatarFallback className="bg-bizteal-500 text-white">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                {!sidebarMinimized && (
-                  <div className="flex flex-col items-start">
-                    <span className="text-sm font-medium">{user.name}</span>
-                    <span className="text-xs capitalize">{user.role.replace("_", " ")}</span>
-                  </div>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/profile">Profile</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={logout} className="text-destructive">
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+        {/* Sidebar Bottom Logout Button */}
+        <div className="border-t border-sidebar-border p-4 mt-auto">
+          <button
+            className="w-full px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-sm font-medium"
+            onClick={() => {
+              localStorage.removeItem("auth_token");
+              localStorage.removeItem("organization_data");
+              navigate("/login");
+            }}
+          >
+            Logout
+          </button>
         </div>
       </aside>
-      
+
       {/* Main Content */}
-      <div className={cn(
-        "flex flex-1 flex-col transition-all duration-300 ease-in-out",
-        sidebarOpen && !isMobile ? (sidebarMinimized ? "ml-16" : "ml-64") : "ml-0"
-      )}>
+      <div
+        className={cn(
+          "flex flex-1 flex-col transition-all duration-300 ease-in-out",
+          sidebarOpen && !isMobile
+            ? sidebarMinimized
+              ? "ml-16"
+              : "ml-64"
+            : "ml-0"
+        )}
+      >
         {/* Top Navigation */}
         <header className="sticky top-0 z-10 h-16 bg-white shadow">
-          <div className="px-4 h-full flex justify-between items-center">
-            {/* Mobile Menu Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className={cn(
-                sidebarOpen && !isMobile && "invisible"
-              )}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            
-            {/* Page Title - Dynamically set based on route */}
-            <div className="text-lg font-semibold">
-              {filteredNavItems.find(item => 
-                location.pathname === item.path || location.pathname.startsWith(`${item.path}/`))?.name || 'Dashboard'}
-            </div>
-            
-            {/* User Dropdown (for desktop only) */}
+          <div className="px-4 h-full flex items-center justify-between sm:justify-between gap-2">
             {!isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebarMinimized}
+                className="text-sidebar-foreground bg-gray-200 text-gray-700 hover:bg-sidebar-accent"
+                title={sidebarMinimized ? "Expand Sidebar" : "Collapse Sidebar"}
+              >
+                {sidebarMinimized ? (
+                  <ChevronRight className="h-5 w-5" />
+                ) : (
+                  <ChevronLeft className="h-5 w-5" />
+                )}
+              </Button>
+            )}
+            {/* Mobile: Hamburger left, title center; Desktop: title left, logout right */}
+            <div className="flex items-center flex-1 min-w-0">
+              {/* Hamburger icon on mobile */}
+              {isMobile && (
+                <button
+                  className="mr-2 p-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 focus:outline-none sm:hidden"
+                  onClick={toggleSidebar}
+                  aria-label="Open sidebar"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              )}
+              {/* Page Title: centered on mobile, left on desktop */}
+              <div className="text-lg font-semibold truncate w-full text-center sm:text-left">
+                {navigationItems.find(
+                  (item) =>
+                    location.pathname === `${basePath}${item.path}` ||
+                    location.pathname.startsWith(`${basePath}${item.path}/`)
+                )?.name || "Dashboard"}
+              </div>
+            </div>
+
+            {/* Avatar and Dropdown Menu */}
+            <div className="flex items-center gap-4">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center">
-                    <Avatar className="h-8 w-8 mr-2">
-                      <AvatarFallback className="bg-bizteal-500 text-white">
-                        {userInitials}
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>
+                        {organization?.name ? organization.name.charAt(0).toUpperCase() : 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">{user.name}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{organization?.name || 'User'}</p>
+                      
+                    </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/profile">Profile</Link>
+                    <Link to={`${basePath}/profile`} className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout} className="text-destructive">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
+                  <DropdownMenuItem asChild>
+                    <Link to={`${basePath}/settings`} className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                    onClick={() => {
+                      localStorage.removeItem("auth_token");
+                      localStorage.removeItem("organization_data");
+                      navigate("/login");
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            )}
+            </div>
           </div>
         </header>
-        
+
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4">
+        <main className="flex-1 overflow-y-auto p-4 min-w-0">
           <Outlet />
         </main>
       </div>

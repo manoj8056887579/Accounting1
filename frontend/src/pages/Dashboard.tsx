@@ -1,21 +1,22 @@
-
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, BookOpen, Package, Truck, Users, Percent, Receipt, ChartBar } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { Organization } from '@/models/organization';
 
-const Dashboard = () => {
-  const { user } = useAuth();
+const Dashboard = ({ organization }: { organization?: Organization }) => {
+  const { organizationId } = useParams();
+  const basePath = organizationId ? `/${organizationId}` : '';
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('today');
 
   // Welcome message based on the time of day
   const getWelcomeMessage = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
+    if (hour < 12) return 'Good Morning'; 
     if (hour < 18) return 'Good Afternoon';
     return 'Good Evening';
   };
@@ -26,7 +27,7 @@ const Dashboard = () => {
       sales: { amount: 0, transactions: 0 },
       invoices: { amount: 0, count: 0 },
       inventory: { value: 0, items: 0 },
-      purchases: { amount: 0, orders: 0 },
+      purchases: { amount: 0, orders: 0 }, 
       customers: { total: 0, active: 0 },
       tax: { amount: 0, period: 'Current period' }
     },
@@ -72,7 +73,7 @@ const Dashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            {getWelcomeMessage()}, {user?.name}!
+            Welcome!{organization?.name ? ` ${organization.name}` : ''}
           </h1>
           <p className="text-muted-foreground">
             Here's an overview of your business today.
@@ -195,84 +196,68 @@ const Dashboard = () => {
       {/* Module Access Cards */}
       <h2 className="text-xl font-semibold mt-8 mb-4">Quick Access</h2>
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {/* These cards will be conditional based on user role */}
-        {(user?.role === 'admin' || user?.role === 'cashier') && (
-          <Link to="/pos">
-            <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <ShoppingCart className="h-10 w-10 text-bizblue-500 mb-2" />
-                <CardTitle className="text-center text-sm">Point of Sale</CardTitle>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
+        <Link to={`${basePath}/pos`}>
+          <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <ShoppingCart className="h-10 w-10 text-bizblue-500 mb-2" />
+              <CardTitle className="text-center text-sm">Point of Sale</CardTitle>
+            </CardContent>
+          </Card>
+        </Link>
         
-        {(user?.role === 'admin' || user?.role === 'accountant') && (
-          <Link to="/accounting">
-            <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <BookOpen className="h-10 w-10 text-bizblue-500 mb-2" />
-                <CardTitle className="text-center text-sm">Accounting</CardTitle>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
+        <Link to={`${basePath}/accounting`}>
+          <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <BookOpen className="h-10 w-10 text-bizblue-500 mb-2" />
+              <CardTitle className="text-center text-sm">Accounting</CardTitle>
+            </CardContent>
+          </Card>
+        </Link>
         
-        {(user?.role === 'admin' || user?.role === 'inventory_manager') && (
-          <Link to="/inventory">
-            <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <Package className="h-10 w-10 text-bizblue-500 mb-2" />
-                <CardTitle className="text-center text-sm">Inventory</CardTitle>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
+        <Link to={`${basePath}/inventory`}>
+          <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <Package className="h-10 w-10 text-bizblue-500 mb-2" />
+              <CardTitle className="text-center text-sm">Inventory</CardTitle>
+            </CardContent>
+          </Card>
+        </Link>
         
-        {/* Add Sales module quick access */}
-        {(user?.role === 'admin') && (
-          <Link to="/sales">
-            <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <Receipt className="h-10 w-10 text-bizblue-500 mb-2" />
-                <CardTitle className="text-center text-sm">Sales</CardTitle>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
+        <Link to={`${basePath}/sales`}>
+          <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <Receipt className="h-10 w-10 text-bizblue-500 mb-2" />
+              <CardTitle className="text-center text-sm">Sales</CardTitle>
+            </CardContent>
+          </Card>
+        </Link>
         
-        {(user?.role === 'admin' || user?.role === 'purchase_manager') && (
-          <Link to="/purchases">
-            <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <Truck className="h-10 w-10 text-bizblue-500 mb-2" />
-                <CardTitle className="text-center text-sm">Purchases</CardTitle>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
+        <Link to={`${basePath}/purchases`}>
+          <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <Truck className="h-10 w-10 text-bizblue-500 mb-2" />
+              <CardTitle className="text-center text-sm">Purchases</CardTitle>
+            </CardContent>
+          </Card>
+        </Link>
         
-        {(user?.role === 'admin' || user?.role === 'accountant' || user?.role === 'purchase_manager') && (
-          <Link to="/crm">
-            <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <Users className="h-10 w-10 text-bizblue-500 mb-2" />
-                <CardTitle className="text-center text-sm">CRM</CardTitle>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
+        <Link to={`${basePath}/crm`}>
+          <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <Users className="h-10 w-10 text-bizblue-500 mb-2" />
+              <CardTitle className="text-center text-sm">CRM</CardTitle>
+            </CardContent>
+          </Card>
+        </Link>
 
-        {(user?.role === 'admin' || user?.role === 'accountant') && (
-          <Link to="/reports">
-            <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <ChartBar className="h-10 w-10 text-bizblue-500 mb-2" />
-                <CardTitle className="text-center text-sm">Reports</CardTitle>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
+        <Link to={`${basePath}/reports`}>
+          <Card className="hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-pointer border-primary/10 hover:border-primary/50">
+            <CardContent className="p-6 flex flex-col items-center justify-center">
+              <ChartBar className="h-10 w-10 text-bizblue-500 mb-2" />
+              <CardTitle className="text-center text-sm">Reports</CardTitle>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Recent Activity Section */}

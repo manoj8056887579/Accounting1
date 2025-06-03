@@ -22,7 +22,7 @@ interface RazorpayOptions {
     email: string;
     contact: string;
   };
-  theme: {
+  theme: { 
     color: string;
   };
   modal: {
@@ -125,7 +125,7 @@ const RazorpayTest = () => {
         },
         prefill: {
           name: "Test User",
-          email: "test@example.com",
+          email: "test@example.com", 
           contact: "9999999999",
         },
         theme: {

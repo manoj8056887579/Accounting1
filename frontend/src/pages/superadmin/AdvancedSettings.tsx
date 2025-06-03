@@ -34,7 +34,6 @@ const AdvancedSettings = () => {
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="free-trial">Free Trial</TabsTrigger>
           <TabsTrigger value="finance">Finance</TabsTrigger>
-        
           <TabsTrigger value="theme">Theme</TabsTrigger>
         </TabsList>
 
@@ -119,8 +118,9 @@ const AdvancedSettings = () => {
             <CardContent>
               <ThemeConfiguration />
             </CardContent>
-          </Card>
+          </Card> 
         </TabsContent>
+
       </Tabs>
     </div>
   );

@@ -36,6 +36,9 @@ interface SubscriptionPlan {
   is_published: boolean;
   is_popular: boolean;
   razorpay_plan_id: string;
+  gst_percentage: number | null;
+  gst_amount: number | null;
+  total_amount: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -77,6 +80,7 @@ const SubscriptionPlans = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [financeSettings, setFinanceSettings] = useState<{ gst_percentage: number } | null>(null);
 
   const PLANS_PER_PAGE = 3;
 
@@ -124,6 +128,9 @@ const SubscriptionPlans = () => {
       is_published: false,
       is_popular: false,
       razorpay_plan_id: "",
+      gst_percentage: null,
+      gst_amount: null,
+      total_amount: null,
       created_at: "",
       updated_at: ""
     });
@@ -148,6 +155,17 @@ const SubscriptionPlans = () => {
       toast.error('Error fetching subscription plans');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFinanceSettings = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/superadmin/finance`);
+      if (response.data.success) {
+        setFinanceSettings(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching finance settings:', error);
     }
   };
 
@@ -277,7 +295,7 @@ const SubscriptionPlans = () => {
   };
 
   const handleAddFeature = () => {
-    if (!currentPlan) return;
+    if (!currentPlan) return; 
     
     setCurrentPlan({
       ...currentPlan,
@@ -379,9 +397,18 @@ const SubscriptionPlans = () => {
     );
   };
 
+  // Function to calculate GST and total amount
+  const calculateGSTAndTotal = (basePrice: number): { gstAmount: number; totalAmount: number } => {
+    const gstPercentage = financeSettings?.gst_percentage || 18.00;
+    const gstAmount = (basePrice * gstPercentage) / 100;
+    const totalAmount = basePrice + gstAmount;
+    return { gstAmount, totalAmount };
+  };
+
   // Add useEffect to fetch plans on component mount
   useEffect(() => {
     fetchSubscriptionPlans();
+    fetchFinanceSettings();
   }, []);
 
   return (
@@ -436,10 +463,18 @@ const SubscriptionPlans = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold mb-4">
+                  <div className="text-3xl font-bold mb-2">
                     {formatPrice(plan.price, plan.currency)}
                     <span className="text-base font-normal text-muted-foreground">/month</span>
                   </div>
+                  
+                  {plan.gst_percentage && plan.gst_amount && (
+                    <div className="text-sm text-muted-foreground mb-4">
+                      <div>Base Price: {formatPrice(plan.price, plan.currency)}</div>
+                      <div>GST ({plan.gst_percentage}%): {formatPrice(plan.gst_amount, plan.currency)}</div>
+                      <div className="font-medium">Total: {formatPrice(plan.total_amount || plan.price, plan.currency)}</div>
+                    </div>
+                  )}
                   
                   <div className="flex items-center mb-3 text-sm">
                     <Users className="h-5 w-5 text-blue-500 mr-2 shrink-0" />
@@ -536,10 +571,18 @@ const SubscriptionPlans = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold mb-4">
+                  <div className="text-3xl font-bold mb-2">
                     {formatPrice(plan.price, plan.currency)}
                     <span className="text-base font-normal text-muted-foreground">/year</span>
                   </div>
+                  
+                  {plan.gst_percentage && plan.gst_amount && (
+                    <div className="text-sm text-muted-foreground mb-4">
+                      <div>Base Price: {formatPrice(plan.price, plan.currency)}</div>
+                      <div>GST ({plan.gst_percentage}%): {formatPrice(plan.gst_amount, plan.currency)}</div>
+                      <div className="font-medium">Total: {formatPrice(plan.total_amount || plan.price, plan.currency)}</div>
+                    </div>
+                  )}
                   
                   <div className="flex items-center mb-3 text-sm">
                     <Users className="h-5 w-5 text-blue-500 mr-2 shrink-0" />
@@ -667,6 +710,30 @@ const SubscriptionPlans = () => {
                   <option value="GBP">GBP (£)</option>
                 </select>
               </div>
+            </div>
+            
+            {/* GST Calculation Preview */}
+            <div className="p-4 border rounded-md bg-muted/30">
+              <h4 className="text-sm font-medium mb-2">Price Breakdown</h4>
+              {currentPlan && currentPlan.price > 0 && (
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Base Price:</span>
+                    <span>{formatPrice(currentPlan.price, currentPlan.currency || 'INR')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>GST ({financeSettings?.gst_percentage || 18}%):</span>
+                    <span>{formatPrice(calculateGSTAndTotal(currentPlan.price).gstAmount, currentPlan.currency || 'INR')}</span>
+                  </div>
+                  <div className="flex justify-between font-medium">
+                    <span>Total Amount:</span>
+                    <span>{formatPrice(calculateGSTAndTotal(currentPlan.price).totalAmount, currentPlan.currency || 'INR')}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    GST will be calculated based on the current finance settings ({financeSettings?.gst_percentage || 18}%)
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-4">

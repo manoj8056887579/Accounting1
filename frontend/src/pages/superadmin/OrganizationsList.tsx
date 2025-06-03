@@ -1,18 +1,35 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Building, Search, Plus, MoreHorizontal, Check, X, ArrowUpDown, Mail, Package, Users, Grid3X3
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import {
+  Building,
+  Search,
+  Plus,
+  MoreHorizontal,
+  Check,
+  X,
+  ArrowUpDown,
+  Mail,
+  Package,
+  Users,
+  Grid3X3,
+  Phone,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -20,167 +37,210 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { OrganizationCreationRequest } from '@/models/superadmin';
-import { createOrganization } from '@/services/organizationService';
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Define interface for organization data
+interface Organization {
+  id: string;
+  organization_id: string;
+  name: string;
+  admin_email: string;
+  admin_name: string;
+  phone_number?: string;
+  subscription_plan: string;
+  user_limit: number;
+  enabled_modules: string[];
+  status: string;
+  users?: number; // Optional for frontend display
+  created_at: string;
+}
+
+// Define interface for organization creation request
+interface OrganizationCreationRequest {
+  name: string;
+  adminEmail: string;
+  adminName: string;
+  phoneNumber?: string;
+  planId: string;
+}
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // Mock plans for dropdown
 const subscriptionPlans = [
   {
-    id: 'basic',
-    name: 'Basic',
-    description: 'Essential features for small businesses',
+    id: "basic",
+    name: "Basic",
+    description: "Essential features for small businesses",
     userLimit: 10,
-    modules: ['inventory', 'pos', 'sales']
+    modules: ["inventory", "pos", "sales"],
   },
   {
-    id: 'standard',
-    name: 'Standard',
-    description: 'Perfect for growing businesses',
+    id: "standard",
+    name: "Standard",
+    description: "Perfect for growing businesses",
     userLimit: 25,
-    modules: ['inventory', 'pos', 'sales', 'purchases', 'crm', 'reports']
+    modules: ["inventory", "pos", "sales", "purchases", "crm", "reports"],
   },
   {
-    id: 'premium',
-    name: 'Premium',
-    description: 'Advanced features for larger operations',
+    id: "premium",
+    name: "Premium",
+    description: "Advanced features for larger operations",
     userLimit: 0, // Unlimited
-    modules: ['inventory', 'pos', 'sales', 'purchases', 'accounting', 'crm', 'whatsapp', 'reports']
-  }
+    modules: [
+      "inventory",
+      "pos",
+      "sales",
+      "purchases",
+      "accounting",
+      "crm",
+      "whatsapp",
+      "reports",
+    ],
+  },
 ];
 
 // Module display names
 const moduleNames = {
-  inventory: 'Inventory',
-  pos: 'POS',
-  sales: 'Sales',
-  purchases: 'Purchases',
-  accounting: 'Accounting',
-  crm: 'CRM',
-  whatsapp: 'WhatsApp',
-  reports: 'Reports'
+  inventory: "Inventory",
+  pos: "POS",
+  sales: "Sales",
+  purchases: "Purchases",
+  accounting: "Accounting",
+  crm: "CRM",
+  whatsapp: "WhatsApp",
+  reports: "Reports",
 };
-
-// Mock data for organizations
-const organizations = [
-  {
-    id: '1',
-    name: 'ABC Corporation',
-    admin: 'admin@abc-corp.com',
-    subscription: 'Premium',
-    userLimit: 0, // Unlimited
-    enabledModules: ['inventory', 'pos', 'sales', 'purchases', 'accounting', 'crm', 'whatsapp', 'reports'],
-    status: 'active',
-    users: 24,
-    created: '2023-01-15'
-  },
-  {
-    id: '2',
-    name: 'XYZ Industries',
-    admin: 'admin@xyz.com',
-    subscription: 'Standard',
-    userLimit: 25,
-    enabledModules: ['inventory', 'pos', 'sales', 'purchases', 'crm', 'reports'],
-    status: 'active',
-    users: 16,
-    created: '2023-02-22'
-  },
-  {
-    id: '3',
-    name: '123 Enterprises',
-    admin: 'admin@123ent.com',
-    subscription: 'Basic',
-    userLimit: 10,
-    enabledModules: ['inventory', 'pos', 'sales'],
-    status: 'suspended',
-    users: 5,
-    created: '2023-03-10'
-  },
-  {
-    id: '4',
-    name: 'Tech Solutions',
-    admin: 'admin@techsol.com',
-    subscription: 'Premium',
-    userLimit: 0,
-    enabledModules: ['inventory', 'pos', 'sales', 'purchases', 'accounting', 'crm', 'whatsapp', 'reports'],
-    status: 'active',
-    users: 42,
-    created: '2023-04-05'
-  },
-  {
-    id: '5',
-    name: 'Global Services',
-    admin: 'admin@globalserv.com',
-    subscription: 'Standard',
-    userLimit: 25,
-    enabledModules: ['inventory', 'pos', 'sales', 'purchases', 'crm', 'reports'],
-    status: 'past_due',
-    users: 11,
-    created: '2023-05-18'
-  }
-];
 
 const OrganizationsList = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newOrg, setNewOrg] = useState<OrganizationCreationRequest>({
-    name: '',
-    adminName: '',
-    adminEmail: '',
-    planId: 'standard'
+    name: "",
+    adminName: "",
+    adminEmail: "",
+    phoneNumber: "",
+    planId: "standard",
   });
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredOrgs = organizations.filter(org => 
-    org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    org.admin.toLowerCase().includes(searchQuery.toLowerCase())
+  // Fetch organizations on component mount
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
+  // Function to fetch organizations from the API
+  const fetchOrganizations = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/superadmin/organization`
+      );
+
+      if (response.data.success) {
+        setOrganizations(response.data.data);
+      } else {
+        toast.error("Failed to fetch organizations");
+      }
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Error fetching organizations", {
+        description: errorMsg,
+      });
+      console.error("Error fetching organizations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredOrgs = organizations.filter(
+    (org) =>
+      org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      org.admin_email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleCreateOrganization = async () => {
     // Validate form
-    if (!newOrg.name || !newOrg.adminEmail) {
+    if (!newOrg.name || !newOrg.adminEmail || !newOrg.adminName) {
       toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       setIsCreating(true);
-      
-      // Call the organization creation service
-      await createOrganization(newOrg);
-      
-      toast.success(`Organization "${newOrg.name}" created successfully`, {
-        description: `Admin account created for ${newOrg.adminEmail}`,
-      });
-      
-      setCreateDialogOpen(false);
-      setNewOrg({
-        name: '',
-        adminName: '',
-        adminEmail: '',
-        planId: 'standard'
-      });
-      
-      // In a real app, we would refresh the organizations list here
-      // For now, we'll just keep the mock data
-      
-    } catch (error: any) {
+
+      // Call the API directly using Axios
+      const response = await axios.post(
+        `${API_URL}/api/superadmin/organization`,
+        {
+          name: newOrg.name,
+          adminEmail: newOrg.adminEmail,
+          adminName: newOrg.adminName,
+          phoneNumber: newOrg.phoneNumber,
+          planId: newOrg.planId,
+        }
+      );
+
+      if (response.data.success) {
+        const tempPassword = response.data.data.admin.tempPassword;
+
+        toast.success(`Organization "${newOrg.name}" created successfully`, {
+          description: `Admin account created for ${newOrg.adminEmail}. Temporary password: ${tempPassword}`,
+          duration: 10000, // Show for 10 seconds
+        });
+
+        // Refresh the organizations list
+        fetchOrganizations();
+
+        // Close the dialog and reset form
+        setCreateDialogOpen(false);
+        setNewOrg({
+          name: "",
+          adminName: "",
+          adminEmail: "",
+          phoneNumber: "",
+          planId: "standard",
+        });
+      } else {
+        toast.error("Failed to create organization", {
+          description: response.data.message,
+        });
+      }
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "An unknown error occurred";
       toast.error("Failed to create organization", {
-        description: error.message || "Please try again later",
+        description: errorMsg,
       });
+      console.error("Error creating organization:", error);
     } finally {
       setIsCreating(false);
     }
@@ -188,243 +248,265 @@ const OrganizationsList = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
-        return <Badge variant="outline" className="bg-green-100 text-green-800">Active</Badge>;
-      case 'suspended':
-        return <Badge variant="outline" className="bg-red-100 text-red-800">Suspended</Badge>;
-      case 'past_due':
-        return <Badge variant="outline" className="bg-amber-100 text-amber-800">Past Due</Badge>;
+      case "active":
+        return <Badge className="bg-green-500">Active</Badge>;
+      case "suspended":
+        return <Badge variant="destructive">Suspended</Badge>;
+
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const getSelectedPlanDetails = () => {
-    return subscriptionPlans.find(plan => plan.id === newOrg.planId);
+    return subscriptionPlans.find((plan) => plan.id === newOrg.planId);
+  };
+
+  const handleStatusChange = async (
+    organizationId: string,
+    currentStatus: string
+  ) => {
+    const newStatus = currentStatus === "active" ? "suspended" : "active";
+
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/superadmin/organization/${organizationId}`,
+        {
+          status: newStatus,
+        }
+      );
+
+      if (response.data.success) {
+        toast.success(
+          `Organization ${
+            newStatus === "active" ? "activated" : "suspended"
+          } successfully`
+        );
+        fetchOrganizations();
+      } else {
+        toast.error(`Failed to update organization status`);
+      }
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Error updating organization status", {
+        description: errorMsg,
+      });
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-4">
           <h2 className="text-3xl font-bold tracking-tight">Organizations</h2>
-          <p className="text-muted-foreground">
-            Manage tenant organizations in the system
-          </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> New Organization
-        </Button>
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="space-y-0 pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle>All Organizations</CardTitle>
-            <div className="flex items-center gap-2">
+
+            <div className="w-72">
               <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                 <Input
-                  type="search"
                   placeholder="Search organizations..."
-                  className="w-[250px] pl-8"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  className="max-w-sm pl-8"
                 />
               </div>
             </div>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Organization
+            </Button>
           </div>
-          <CardDescription>
-            {filteredOrgs.length} organization(s) found
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Admin Email</TableHead>
+                <TableHead>Organization</TableHead>
+                <TableHead>Admin</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Plan</TableHead>
-                <TableHead>Users</TableHead>
-                <TableHead>Modules</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrgs.map(org => (
-                <TableRow key={org.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center">
-                      <Building className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {org.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>{org.admin}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Package className="mr-1 h-4 w-4 text-muted-foreground" />
-                      {org.subscription}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Users className="mr-1 h-4 w-4 text-muted-foreground" />
-                      {org.users}/{org.userLimit === 0 ? '∞' : org.userLimit}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex">
-                            <Badge variant="outline" className="bg-blue-50">
-                              {org.enabledModules.length} modules
-                            </Badge>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="p-2">
-                            <p className="font-medium mb-1">Enabled Modules:</p>
-                            <ul className="list-disc pl-5 space-y-1">
-                              {org.enabledModules.map(module => (
-                                <li key={module}>{moduleNames[module] || module}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(org.status)}</TableCell>
-                  <TableCell>{new Date(org.created).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate(`/superadmin/organizations/${org.id}`)}>
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.success("Organization edited")}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => toast.success(`${org.status === 'active' ? 'Suspended' : 'Activated'} organization`)}
-                          className={org.status === 'active' ? "text-destructive" : "text-green-600"}
-                        >
-                          {org.status === 'active' ? 'Suspend' : 'Activate'}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    Loading...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredOrgs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    No organizations found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredOrgs.map((org) => (
+                  <TableRow key={org.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{org.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {org.organization_id}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{org.admin_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {org.admin_email}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{org.phone_number || "N/A"}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{org.subscription_plan}</Badge>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(org.status)}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              navigate(
+                                `/superadmin/organizations/${org.organization_id}`
+                              )
+                            }
+                          >
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleStatusChange(org.id, org.status)
+                            }
+                          >
+                            {org.status === "active" ? "Suspend" : "Activate"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
+      {/* Create Organization Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
             <DialogTitle>Create New Organization</DialogTitle>
             <DialogDescription>
-              Create a new tenant organization and assign an administrator
+              Create a new organization with an admin account.
             </DialogDescription>
           </DialogHeader>
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Organization Name</Label>
               <Input
                 id="name"
                 value={newOrg.name}
-                onChange={(e) => setNewOrg({...newOrg, name: e.target.value})}
+                onChange={(e) => setNewOrg({ ...newOrg, name: e.target.value })}
                 placeholder="Enter organization name"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="adminName">Admin Name</Label>
-                <Input
-                  id="adminName"
-                  value={newOrg.adminName}
-                  onChange={(e) => setNewOrg({...newOrg, adminName: e.target.value})}
-                  placeholder="Enter admin name"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="adminEmail">Admin Email</Label>
-                <Input
-                  id="adminEmail"
-                  type="email"
-                  value={newOrg.adminEmail}
-                  onChange={(e) => setNewOrg({...newOrg, adminEmail: e.target.value})}
-                  placeholder="Enter admin email"
-                />
-              </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="adminName">Admin Name</Label>
+              <Input
+                id="adminName"
+                value={newOrg.adminName}
+                onChange={(e) =>
+                  setNewOrg({ ...newOrg, adminName: e.target.value })
+                }
+                placeholder="Enter admin name"
+              />
             </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="adminEmail">Admin Email</Label>
+              <Input
+                id="adminEmail"
+                type="email"
+                value={newOrg.adminEmail}
+                onChange={(e) =>
+                  setNewOrg({ ...newOrg, adminEmail: e.target.value })
+                }
+                placeholder="Enter admin email"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Input
+                id="phoneNumber"
+                value={newOrg.phoneNumber}
+                onChange={(e) =>
+                  setNewOrg({ ...newOrg, phoneNumber: e.target.value })
+                }
+                placeholder="Enter phone number"
+              />
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="plan">Subscription Plan</Label>
-              <select
-                id="plan"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+              <Select
                 value={newOrg.planId}
-                onChange={(e) => setNewOrg({...newOrg, planId: e.target.value})}
+                onValueChange={(value) =>
+                  setNewOrg({ ...newOrg, planId: value })
+                }
               >
-                {subscriptionPlans.map(plan => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name} - {plan.userLimit === 0 ? "Unlimited Users" : `${plan.userLimit} Users`}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            {/* Plan Details Preview */}
-            {getSelectedPlanDetails() && (
-              <div className="mt-2 p-3 border rounded-md bg-muted/20">
-                <h4 className="font-medium flex items-center">
-                  <Package className="h-4 w-4 mr-1" /> 
-                  {getSelectedPlanDetails()?.name} Plan Details
-                </h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {getSelectedPlanDetails()?.description}
-                </p>
-                
-                <div className="mt-3">
-                  <div className="flex items-center text-sm mb-1">
-                    <Users className="h-4 w-4 mr-1 text-muted-foreground" />
-                    <span>{getSelectedPlanDetails()?.userLimit === 0 ? "Unlimited Users" : `${getSelectedPlanDetails()?.userLimit} Users`}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-sm">
-                    <Grid3X3 className="h-4 w-4 mr-1 text-muted-foreground" />
-                    <span>Available Modules: </span>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {getSelectedPlanDetails()?.modules.map(module => (
-                      <Badge key={module} variant="outline" className="text-xs">
-                        {moduleNames[module] || module}
-                      </Badge>
-                    ))}
-                  </div>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subscriptionPlans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {getSelectedPlanDetails() && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  <p>{getSelectedPlanDetails()?.description}</p>
+                  <p className="mt-1">
+                    User limit:{" "}
+                    {getSelectedPlanDetails()?.userLimit || "Unlimited"} users
+                  </p>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+            <Button
+              onClick={() => setCreateDialogOpen(false)}
+              variant="outline"
+            >
               Cancel
             </Button>
             <Button onClick={handleCreateOrganization} disabled={isCreating}>
-              {isCreating && <span className="mr-2 h-4 w-4 animate-spin">⏳</span>}
-              Create Organization
+              {isCreating ? "Creating..." : "Create Organization"}
             </Button>
           </DialogFooter>
         </DialogContent>

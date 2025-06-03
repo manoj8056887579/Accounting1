@@ -51,7 +51,7 @@ export const TenantSelector = () => {
           aria-expanded={open}
           className="w-full justify-between"
         >
-          <div className="flex items-center">
+          <div className="flex items-center"> 
             {currentOrganization.logo ? (
               <img 
                 src={currentOrganization.logo} 

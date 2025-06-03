@@ -2,13 +2,14 @@ const pool = require('../../../utils/config/connectDB');
 const Razorpay = require('razorpay');
 const subscriptionSchema = require('../../../utils/models/superadmin/subscriptionplan/SubscriptionSchema');
 const PaymentgatewaySchema = require('../../../utils/models/superadmin/paymentgateway/PaymentGatewaySchema');
+const financeSchema = require('../../../utils/models/superadmin/finance/financeSchema');
 // Schema initialization is now handled by initDB.js
 const initializeSchema = async () => {
   // Skip local initialization as it's handled by initDB.js
   return Promise.resolve();
 };
 
-// Payment gateway schema initialization is now handled by initDB.js
+// Payment gateway schema initialization is now handled by initDB.js 
 const initializePaymentGatewaySchema = async () => {
   // Skip local initialization as it's handled by initDB.js
   return Promise.resolve();
@@ -190,17 +191,32 @@ exports.postSubscriptionPlans = async (req, res) => {
       );
     }
 
+    // Get active finance settings to retrieve GST percentage
+    const financeSettingsResult = await client.query(
+      'SELECT gst_percentage FROM finance_settings WHERE active = TRUE ORDER BY id DESC LIMIT 1'
+    );
+    
+    // Set default GST percentage if no finance settings exist
+    const gstPercentage = financeSettingsResult.rows.length > 0 
+      ? parseFloat(financeSettingsResult.rows[0].gst_percentage) 
+      : 18.00;
+    
+    // Calculate GST amount and total amount
+    const basePrice = parseFloat(price);
+    const gstAmount = (basePrice * gstPercentage) / 100;
+    const totalAmount = basePrice + gstAmount;
+
     // Get Razorpay instance
     const razorpay = await getRazorpayInstance();
 
-    // Create plan in Razorpay
+    // Create plan in Razorpay using the total amount (including GST)
     const razorpayPlan = await razorpay.plans.create({
       period: mapIntervalToRazorpayPeriod(interval),
       interval: getIntervalMultiplier(interval),
       item: {
         name: name,
         description: description,
-        amount: Math.round(price * 100),
+        amount: Math.round(totalAmount * 100), // Use total amount including GST
         currency: currency || 'INR'
       }
     });
@@ -218,16 +234,17 @@ exports.postSubscriptionPlans = async (req, res) => {
       });
     }
 
-    // Insert into database with Razorpay plan ID
+    // Insert into database with Razorpay plan ID and GST details
     const result = await client.query(
       `INSERT INTO subscription_plans 
-       (name, description, price, currency, interval, features, user_limit, modules, is_popular, is_published, razorpay_plan_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       (name, description, price, currency, interval, features, user_limit, modules, 
+        is_popular, is_published, razorpay_plan_id, gst_percentage, gst_amount, total_amount)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        RETURNING *`,
       [
         name,
         description,
-        price,
+        basePrice,
         currency || 'INR',
         interval,
         JSON.stringify(features || []),
@@ -235,7 +252,10 @@ exports.postSubscriptionPlans = async (req, res) => {
         JSON.stringify(modules || []),
         isPopular || false,
         isPublished || false,
-        razorpayPlan.id
+        razorpayPlan.id,
+        gstPercentage,
+        gstAmount,
+        totalAmount
       ]
     );
 
@@ -296,6 +316,9 @@ exports.putSubscriptionPlan = async (req, res) => {
 
     const plan = checkResult.rows[0];
 
+    // Start transaction
+    await client.query('BEGIN');
+
     // If marking as popular, unmark any existing popular plan for this interval
     if (isPopular) {
       await client.query(
@@ -316,11 +339,14 @@ exports.putSubscriptionPlan = async (req, res) => {
     );
 
     if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({
         success: false,
         message: 'Failed to update subscription plan'
       });
     }
+
+    await client.query('COMMIT');
 
     const updatedPlan = result.rows[0];
     const messages = [];
@@ -337,6 +363,211 @@ exports.putSubscriptionPlan = async (req, res) => {
       message: messages.join(' and ') + ' successfully'
     });
   } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error updating subscription plan:', error);
+    
+    if (error.message.includes('unique_popular_per_interval')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only one plan can be marked as popular per interval'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Error updating subscription plan',
+      error: error.message
+    });
+  } finally {
+    client.release();
+  }
+};
+
+// Add a new endpoint to update subscription plan with GST
+exports.updateSubscriptionPlan = async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      description,
+      price,
+      currency,
+      interval,
+      features,
+      userLimit,
+      modules,
+      isPopular,
+      isPublished
+    } = req.body;
+
+    // Validate input data
+    const validationErrors = validateSubscriptionPlan(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validationErrors
+      });
+    }
+
+    // Check if plan exists
+    const checkResult = await client.query(
+      'SELECT * FROM subscription_plans WHERE id = $1',
+      [id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Subscription plan not found'
+      });
+    }
+
+    // Start transaction
+    await client.query('BEGIN');
+
+    // If marking as popular, unmark any existing popular plan for this interval
+    if (isPopular) {
+      await client.query(
+        'UPDATE subscription_plans SET is_popular = false WHERE interval = $1 AND id != $2 AND is_popular = true',
+        [interval, id]
+      );
+    }
+
+    // Get active finance settings to retrieve GST percentage
+    const financeSettingsResult = await client.query(
+      'SELECT gst_percentage FROM finance_settings WHERE active = TRUE ORDER BY id DESC LIMIT 1'
+    );
+    
+    // Set default GST percentage if no finance settings exist
+    const gstPercentage = financeSettingsResult.rows.length > 0 
+      ? parseFloat(financeSettingsResult.rows[0].gst_percentage) 
+      : 18.00;
+    
+    // Calculate GST amount and total amount
+    const basePrice = parseFloat(price);
+    const gstAmount = (basePrice * gstPercentage) / 100;
+    const totalAmount = basePrice + gstAmount;
+
+    // Update in Razorpay if razorpay_plan_id exists
+    const currentPlan = checkResult.rows[0];
+    if (currentPlan.razorpay_plan_id) {
+      try {
+        const razorpay = await getRazorpayInstance();
+        // Since Razorpay doesn't allow updating plans, we need to create a new one
+        // and update our reference
+        const razorpayPlan = await razorpay.plans.create({
+          period: mapIntervalToRazorpayPeriod(interval),
+          interval: getIntervalMultiplier(interval),
+          item: {
+            name: name,
+            description: description,
+            amount: Math.round(totalAmount * 100), // Use total amount including GST
+            currency: currency || 'INR'
+          }
+        });
+
+        // Update the plan in our database
+        const result = await client.query(
+          `UPDATE subscription_plans 
+           SET name = $1,
+               description = $2,
+               price = $3,
+               currency = $4,
+               interval = $5,
+               features = $6,
+               user_limit = $7,
+               modules = $8,
+               is_popular = $9,
+               is_published = $10,
+               razorpay_plan_id = $11,
+               gst_percentage = $12,
+               gst_amount = $13,
+               total_amount = $14,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = $15
+           RETURNING *`,
+          [
+            name,
+            description,
+            basePrice,
+            currency || 'INR',
+            interval,
+            JSON.stringify(features || []),
+            userLimit || 0,
+            JSON.stringify(modules || []),
+            isPopular || false,
+            isPublished || false,
+            razorpayPlan.id,
+            gstPercentage,
+            gstAmount,
+            totalAmount,
+            id
+          ]
+        );
+
+        await client.query('COMMIT');
+
+        res.status(200).json({
+          success: true,
+          data: result.rows[0],
+          razorpayPlanId: razorpayPlan.id,
+          message: 'Subscription plan updated successfully'
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error updating plan in Razorpay:', error);
+        throw error;
+      }
+    } else {
+      // If no Razorpay plan exists, just update our database
+      const result = await client.query(
+        `UPDATE subscription_plans 
+         SET name = $1,
+             description = $2,
+             price = $3,
+             currency = $4,
+             interval = $5,
+             features = $6,
+             user_limit = $7,
+             modules = $8,
+             is_popular = $9,
+             is_published = $10,
+             gst_percentage = $11,
+             gst_amount = $12,
+             total_amount = $13,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $14
+         RETURNING *`,
+        [
+          name,
+          description,
+          basePrice,
+          currency || 'INR',
+          interval,
+          JSON.stringify(features || []),
+          userLimit || 0,
+          JSON.stringify(modules || []),
+          isPopular || false,
+          isPublished || false,
+          gstPercentage,
+          gstAmount,
+          totalAmount,
+          id
+        ]
+      );
+
+      await client.query('COMMIT');
+
+      res.status(200).json({
+        success: true,
+        data: result.rows[0],
+        message: 'Subscription plan updated successfully'
+      });
+    }
+  } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error updating subscription plan:', error);
     
     if (error.message.includes('unique_popular_per_interval')) {

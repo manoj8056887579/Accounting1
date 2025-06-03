@@ -21,11 +21,11 @@ CREATE INDEX IF NOT EXISTS idx_payment_gateways_is_active ON payment_gateways(is
 CREATE INDEX IF NOT EXISTS idx_payment_gateways_created_at ON payment_gateways(created_at DESC);
 
 CREATE TABLE IF NOT EXISTS razorpay_orders (
-    id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY, 
     order_id VARCHAR(255) NOT NULL UNIQUE,
-    payment_id VARCHAR(255),
+    payment_id VARCHAR(255), 
     payment_signature VARCHAR(255),
-    amount INTEGER NOT NULL,
+    amount INTEGER NOT NULL, 
     currency VARCHAR(3) NOT NULL DEFAULT 'INR',
     receipt VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'created',
@@ -40,6 +40,19 @@ CREATE TABLE IF NOT EXISTS razorpay_orders (
 CREATE INDEX IF NOT EXISTS idx_razorpay_orders_order_id ON razorpay_orders(order_id);
 CREATE INDEX IF NOT EXISTS idx_razorpay_orders_payment_id ON razorpay_orders(payment_id);
 CREATE INDEX IF NOT EXISTS idx_razorpay_orders_status ON razorpay_orders(status);
-CREATE INDEX IF NOT EXISTS idx_razorpay_orders_created_at ON razorpay_orders(created_at DESC);`;
+CREATE INDEX IF NOT EXISTS idx_razorpay_orders_created_at ON razorpay_orders(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS webhook_events (
+    id SERIAL PRIMARY KEY,
+    event_id VARCHAR(255) NOT NULL UNIQUE,
+    event_type VARCHAR(100) NOT NULL,
+    payload JSONB NOT NULL,
+    processed BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_events_event_id ON webhook_events(event_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_event_type ON webhook_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_created_at ON webhook_events(created_at DESC);`;
 
 module.exports = schema; 

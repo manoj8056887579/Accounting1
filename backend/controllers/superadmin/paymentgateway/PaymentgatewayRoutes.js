@@ -43,6 +43,25 @@ exports.postPaymentgateway = async (req, res) => {
       });
     }
 
+    // Validate activation attempt - prevent activation without proper credentials
+    if (isActive && (!apiKey || !apiSecret)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot activate gateway without API credentials'
+      });
+    }
+
+    // Validate API key format for Razorpay
+    if (gateway === 'razorpay') {
+      const keyPrefix = isTestMode ? 'rzp_test_' : 'rzp_live_';
+      if (!apiKey.startsWith(keyPrefix)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid API key format. ${isTestMode ? 'Test' : 'Live'} mode key should start with '${keyPrefix}'`
+        });
+      }
+    }
+
     // Verify Razorpay credentials
     const razorpay = createRazorpayConnection(apiKey, apiSecret, isTestMode);
     const verificationResult = await razorpay.verifyCredentials();
@@ -144,7 +163,7 @@ exports.putPaymentgateway = async (req, res) => {
         message: 'Invalid Razorpay credentials: ' + verificationResult.message
       });
     }
-
+ 
     await client.query('BEGIN');
 
     // Check if gateway exists
@@ -201,6 +220,87 @@ exports.putPaymentgateway = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to update payment gateway settings',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  } finally {
+    client.release();
+  }
+};
+
+exports.togglePaymentGatewayStatus = async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { gateway, isActive } = req.body;
+
+    if (!gateway) {
+      return res.status(400).json({
+        success: false,
+        message: 'Gateway identifier is required'
+      });
+    }
+
+    await client.query('BEGIN');
+
+    // Check for existing gateway
+    const existingResult = await client.query(
+      'SELECT * FROM payment_gateways WHERE gateway = $1',
+      [gateway]
+    );
+
+    if (existingResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({
+        success: false,
+        message: 'Payment gateway not found'
+      });
+    }
+
+    // Ensure we have credentials if trying to activate
+    if (isActive) {
+      const gatewayData = existingResult.rows[0];
+      if (!gatewayData.api_key || !gatewayData.api_secret) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot activate gateway without API credentials'
+        });
+      }
+    }
+
+    // Update only the status
+    const result = await client.query(
+      `UPDATE payment_gateways 
+       SET is_active = $1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE gateway = $2
+       RETURNING *`,
+      [isActive, gateway]
+    );
+
+    await client.query('COMMIT');
+
+    const updatedGateway = result.rows[0];
+    res.json({
+      success: true,
+      message: `Payment gateway ${isActive ? 'activated' : 'deactivated'} successfully`,
+      data: {
+        id: updatedGateway.id,
+        gateway: updatedGateway.gateway,
+        apiKey: updatedGateway.api_key,
+        apiSecret: updatedGateway.api_secret,
+        isTestMode: updatedGateway.is_test_mode,
+        webhookSecret: updatedGateway.webhook_secret,
+        isActive: updatedGateway.is_active,
+        createdAt: updatedGateway.created_at,
+        updatedAt: updatedGateway.updated_at
+      }
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error toggling payment gateway status:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to toggle payment gateway status',
       error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   } finally {
