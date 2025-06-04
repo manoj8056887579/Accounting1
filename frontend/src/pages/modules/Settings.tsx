@@ -5,15 +5,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Settings as SettingsIcon, Building, ShoppingCart, Users, FileText, Receipt, Package, MessageSquare, Calculator, CreditCard } from 'lucide-react';
 import GeneralSettings from '@/components/settings/GeneralSettings';
-import UserSettings from '@/components/settings/UserSettings';
+// import UserSettings from '@/components/settings/UserSettings';
 import InvoiceSettings from '@/components/settings/InvoiceSettings';
 import EmailSettings from '@/components/settings/EmailSettings';
-import IntegrationSettings from '@/components/settings/IntegrationSettings';
+// import IntegrationSettings from '@/components/settings/IntegrationSettings';
 import TaxSettings from '@/components/settings/TaxSettings';
 import InventorySettings from '@/components/settings/InventorySettings';
 import SalesSettings from '@/components/settings/SalesSettings';
 import PurchaseSettings from '@/components/settings/PurchaseSettings';
-import WhatsAppSettings from '@/components/settings/WhatsAppSettings';
+// import WhatsAppSettings from '@/components/settings/WhatsAppSettings';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -39,10 +39,10 @@ const SettingsPage = () => {
             <Building className="h-4 w-4" />
             <span className="hidden md:inline">General</span>
           </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-1">
+          {/* <TabsTrigger value="users" className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             <span className="hidden md:inline">Users</span>
-          </TabsTrigger> 
+          </TabsTrigger>  */}
           <TabsTrigger value="invoice" className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
             <span className="hidden md:inline">Invoice</span>
@@ -51,10 +51,10 @@ const SettingsPage = () => {
             <MessageSquare className="h-4 w-4" />
             <span className="hidden md:inline">Email</span>
           </TabsTrigger>
-          <TabsTrigger value="integrations" className="flex items-center gap-1">
+          {/* <TabsTrigger value="integrations" className="flex items-center gap-1">
             <CreditCard className="h-4 w-4" />
             <span className="hidden md:inline">Integrations</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="tax" className="flex items-center gap-1">
             <Calculator className="h-4 w-4" />
             <span className="hidden md:inline">Tax</span>
@@ -71,10 +71,10 @@ const SettingsPage = () => {
             <ShoppingCart className="h-4 w-4" />
             <span className="hidden md:inline">Purchases</span>
           </TabsTrigger>
-          <TabsTrigger value="whatsapp" className="flex items-center gap-1">
+          {/* <TabsTrigger value="whatsapp" className="flex items-center gap-1">
             <MessageSquare className="h-4 w-4" />
             <span className="hidden md:inline">WhatsApp</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
         
         <TabsContent value="general" className="space-y-4">
@@ -91,7 +91,7 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
         
-        <TabsContent value="users" className="space-y-4">
+        {/* <TabsContent value="users" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Users & Permissions</CardTitle>
@@ -103,7 +103,7 @@ const SettingsPage = () => {
               <UserSettings />
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
         
         <TabsContent value="invoice" className="space-y-4">
           <Card>
@@ -122,7 +122,7 @@ const SettingsPage = () => {
         <TabsContent value="email" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Email Templates</CardTitle>
+              <CardTitle>Email SMTP</CardTitle>
               <CardDescription>
                 Customize email notifications and templates
               </CardDescription>
@@ -133,7 +133,7 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
         
-        <TabsContent value="integrations" className="space-y-4">
+        {/* <TabsContent value="integrations" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Integrations</CardTitle>
@@ -145,7 +145,7 @@ const SettingsPage = () => {
               <IntegrationSettings />
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="tax" className="space-y-4">
           <Card>
@@ -203,7 +203,7 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="whatsapp" className="space-y-4">
+        {/* <TabsContent value="whatsapp" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>WhatsApp Settings</CardTitle>
@@ -215,7 +215,7 @@ const SettingsPage = () => {
               <WhatsAppSettings />
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );

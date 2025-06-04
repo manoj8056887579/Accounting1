@@ -23,7 +23,7 @@ app.use((req, res, next) => {
   
   console.log(`[${timestamp}] ${method} ${url} ${status}`);
   
-  if (['POST', 'PUT', 'GET', 'DELETE'].includes(method)) {
+  if (['POST', 'PUT', 'GET', 'DELETE'].includes(method)) { 
     console.log('Request Body:', JSON.stringify(req.body, null, 2));
   }
   
@@ -80,10 +80,17 @@ startServer();
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
+  res.status(err.status || 500).json({
     success: false,
-    message: 'Something broke!',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    message: err.message || 'Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? err : {}
   });
 });
- 
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`
+  });
+});
