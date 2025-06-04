@@ -11,7 +11,7 @@ const superadminSchema = require('../models/superadmin/superadminSchema');
 const organizationAdminSchema = require('../models/superadmin/organization/organizationAdminSchema');
 const OTPSchema = require('../models/auth/OTPSchema');
 async function initializeDatabase(retryCount = 0) {
-  const MAX_RETRIES = 3;
+  const MAX_RETRIES = 3; 
   const client = await pool.connect();
   
   try {

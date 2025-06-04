@@ -16,7 +16,7 @@ import {
   Calendar, 
   Wallet,
   Repeat,
-  Receipt,
+  Receipt, 
   Users,
   FilePlus,
   FileX
@@ -49,15 +49,15 @@ const Purchases = () => {
   // Define all purchases tabs with icons (including credit-notes and debit-notes)
   const purchasesTabs: PurchasesTab[] = [
     { id: 'vendors', label: 'Vendors', icon: <Users className="h-4 w-4" /> },
-    { id: 'expenses', label: 'Expenses', icon: <FileText className="h-4 w-4" /> },
-    { id: 'recurring-expenses', label: 'Recurring Expenses', icon: <Repeat className="h-4 w-4" /> },
+    // { id: 'expenses', label: 'Expenses', icon: <FileText className="h-4 w-4" /> },
+    // { id: 'recurring-expenses', label: 'Recurring Expenses', icon: <Repeat className="h-4 w-4" /> },
     { id: 'purchase-orders', label: 'Purchase Orders', icon: <ShoppingCart className="h-4 w-4" /> },
     { id: 'bills', label: 'Bills', icon: <Receipt className="h-4 w-4" /> },
     { id: 'payments-made', label: 'Payments Made', icon: <Wallet className="h-4 w-4" /> },
     { id: 'recurring-bills', label: 'Recurring Bills', icon: <Calendar className="h-4 w-4" /> },
     { id: 'vendor-credits', label: 'Vendor Credits', icon: <FileMinus className="h-4 w-4" /> },
-    { id: 'purchase-returns', label: 'Purchase Returns', icon: <RotateCcw className="h-4 w-4" /> },
-    { id: 'credit-notes', label: 'Credit Notes', icon: <FilePlus className="h-4 w-4" /> },
+    // { id: 'purchase-returns', label: 'Purchase Returns', icon: <RotateCcw className="h-4 w-4" /> },
+    // { id: 'credit-notes', label: 'Credit Notes', icon: <FilePlus className="h-4 w-4" /> },
     { id: 'debit-notes', label: 'Debit Notes', icon: <FileX className="h-4 w-4" /> },
   ];
 

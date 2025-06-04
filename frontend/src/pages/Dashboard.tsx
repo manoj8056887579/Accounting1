@@ -260,62 +260,7 @@ const Dashboard = ({ organization }: { organization?: Organization }) => {
         </Link>
       </div>
 
-      {/* Recent Activity Section */}
-      <h2 className="text-xl font-semibold mt-8 mb-4">Recent Activity</h2>
-      <Card>
-        <CardHeader>
-          <CardTitle>System Activity</CardTitle>
-          <CardDescription>Recent actions taken in the system</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-2 hover:bg-muted/40 rounded-md transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <ShoppingCart className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">New Sale</p>
-                  <p className="text-xs text-muted-foreground">Sale #10045 was created</p>
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">Just now</div>
-            </div>
-            
-            <div className="flex items-center justify-between p-2 hover:bg-muted/40 rounded-md transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <Users className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Customer Added</p>
-                  <p className="text-xs text-muted-foreground">Jane Doe was added to customers</p>
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">2 hours ago</div>
-            </div>
-            
-            <div className="flex items-center justify-between p-2 hover:bg-muted/40 rounded-md transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <Package className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Low Stock Alert</p>
-                  <p className="text-xs text-muted-foreground">Item #A123 is running low</p>
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">Yesterday</div>
-            </div>
-          </div>
-          
-          <div className="mt-4 flex justify-center">
-            <Button variant="outline" size="sm" className="w-full">
-              View All Activity
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+   
     </div>
   );
 };

@@ -54,13 +54,13 @@ const Sales = () => {
   const salesTabs: SalesTab[] = [
     { id: 'customers', label: 'Customers', icon: <Users className="h-4 w-4" /> },
     { id: 'estimates', label: 'Estimates', icon: <FileText className="h-4 w-4" /> },
-    { id: 'retainer', label: 'Retainer', icon: <Calendar className="h-4 w-4" /> },
+    // { id: 'retainer', label: 'Retainer', icon: <Calendar className="h-4 w-4" /> },
     { id: 'orders', label: 'Orders', icon: <ShoppingCart className="h-4 w-4" /> },
     { id: 'challans', label: 'Challans', icon: <Truck className="h-4 w-4" /> },
     { id: 'invoices', label: 'Invoices', icon: <FileText className="h-4 w-4" /> },
     { id: 'payments', label: 'Payments', icon: <Wallet className="h-4 w-4" /> },
     { id: 'recurring', label: 'Recurring', icon: <Repeat className="h-4 w-4" /> },
-    { id: 'credits', label: 'Credits', icon: <FilePlus className="h-4 w-4" /> },
+    { id: 'credits', label: 'Credit Notes', icon: <FilePlus className="h-4 w-4" /> },
     { id: 'returns', label: 'Returns', icon: <FileX className="h-4 w-4" /> },
   ];
 

@@ -46,12 +46,12 @@ interface SMTPSettings {
 // Initial settings
 const initialSettings: SMTPSettings = {
   host: '',
-  port: 587,
+  port: 587, 
   username: '',
   password: '',
   fromEmail: '',
   fromName: '',
-  secure: true,
+  secure: true, 
   isActive: false,
   updatedAt: new Date().toISOString(),
 };

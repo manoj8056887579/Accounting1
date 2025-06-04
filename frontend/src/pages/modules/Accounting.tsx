@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import ChartOfAccounts from '@/components/accounting/ChartOfAccounts';
 import JournalEntries from '@/components/accounting/JournalEntries';
+import Banks from '@/components/accounting/Banks';
 import { BookOpen, FileText, BarChart3, PieChart } from 'lucide-react';
 
 const Accounting: React.FC = () => {
@@ -22,7 +23,7 @@ const Accounting: React.FC = () => {
       
       <Tabs defaultValue="general-ledger" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="bg-card rounded-lg p-1 border shadow-sm">
-          <TabsList className="w-full grid grid-cols-3 h-12">
+          <TabsList className="w-full grid grid-cols-4 h-12">
             <TabsTrigger value="general-ledger" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">General Ledger</span>
@@ -38,6 +39,12 @@ const Accounting: React.FC = () => {
               <span className="hidden sm:inline">Financial Reports</span>
               <span className="sm:hidden">Reports</span>
             </TabsTrigger>
+
+            <TabsTrigger value="bank" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Bank</span>
+              <span className="sm:hidden">Banks</span>
+            </TabsTrigger>
           </TabsList>
         </div>
         
@@ -51,6 +58,11 @@ const Accounting: React.FC = () => {
             accounts={mockAccounts} 
           />
         </TabsContent>
+
+        <TabsContent value="bank" className="mt-6">
+          <Banks />
+        </TabsContent>
+        
         
         <TabsContent value="reports" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
