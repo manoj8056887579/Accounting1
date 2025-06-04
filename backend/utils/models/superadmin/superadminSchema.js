@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS superadmins (
     country VARCHAR(100) DEFAULT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    reset_token VARCHAR(255) DEFAULT NULL,
+    reset_token_expires TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -58,4 +60,4 @@ END;
 $$;
 `;
 
-module.exports = schema; 
+module.exports = schema;
