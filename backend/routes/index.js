@@ -12,6 +12,8 @@ const googleAuthRoutes = require('./auth/google');
 const otpRoutes = require('./auth/otp');
 const superadminRoutes = require('./superadmin/admindata/superadmin');
 const OrganizationAdmin = require('./superadmin/organizationadmin/organizationadmin')
+const resetPasswordRoutes = require('./auth/reset-password');
+const forgotPasswordRoutes = require('./auth/forgot-password');
 
 const router = express.Router();
 
@@ -26,10 +28,12 @@ router.use('/superadmin/organization', organizationRoutes);
 router.use('/superadmin/admindata/superadmin', superadminRoutes);
 router.use('/superadmin/organizationadmin', OrganizationAdmin)
 
-// Auth routes
+// Auth routes 
 router.use('/auth/register', registerRoutes);
 router.use('/auth/login', loginRoutes);
 router.use('/auth/google', googleAuthRoutes);
 router.use('/auth/otp', otpRoutes);
+router.use('/auth/reset-password', resetPasswordRoutes);
+router.use('/auth/forgot-password', forgotPasswordRoutes);
 
-module.exports = router;    
+module.exports = router;

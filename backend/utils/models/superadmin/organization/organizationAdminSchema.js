@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS organization_admins (
     is_active BOOLEAN DEFAULT TRUE, 
     last_login TIMESTAMP WITH TIME ZONE DEFAULT NULL, 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    reset_token VARCHAR(255) DEFAULT NULL,
+    reset_token_expires TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 
 -- Create or replace function for updating the updated_at column

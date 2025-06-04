@@ -49,7 +49,7 @@ const Login = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await axios.post(`${API_URL}/api/auth/google`, {
+      const response = await axios.post(`${API_URL}/api/auth/google`, { 
         token: credentialResponse.credential
       });
 
@@ -301,6 +301,11 @@ const Login = () => {
                   Don't have an account?{" "}
                   <Link to="/register" className="font-medium text-bizblue-500 hover:text-bizblue-700">
                     Register now
+                  </Link>
+                </p>
+                <p className="mt-2">
+                  <Link to="/forgot-password" className="font-medium text-bizblue-500 hover:text-bizblue-700">
+                    Forgot your password?
                   </Link>
                 </p>
               </div>
